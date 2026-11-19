@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>24 Cartas para Ti ✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #062419;
+      --card-locked: #0d3b29;
+      --card-unlocked: #15803d;
+      --card-opened: #fef3c7;
+      --gold: #fbbf24;
+      --text-light: #ecfdf5;
+      --text-dark: #064e3b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top, #0d3b29 0%, #041710 100%);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    header p { color: #cbd5e1; font-size: 1rem; line-height: 1.5; }
+
+    #preview-badge {
+      background: var(--gold);
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 1rem;
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      .grid { grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    }
+
+    .door {
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .door:hover { transform: translateY(-4px); }
+    .door.locked { background: var(--card-locked); opacity: 0.75; }
+    .door.available {
+      background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+    }
+    .door.opened {
+      background: var(--card-opened);
+      color: var(--text-dark);
+      border: 1px solid #d97706;
+    }
+
+    .day-number { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 600; }
+    .door-status { font-size: 0.75rem; margin-top: 0.35rem; opacity: 0.85; }
+
+    .keepsake-container { text-align: center; margin-top: 3rem; display: none; }
+    .keepsake-btn {
+      background: transparent;
+      color: var(--gold);
+      border: 1.5px solid var(--gold);
+      padding: 0.85rem 1.6rem;
+      border-radius: 99px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .keepsake-btn:hover { background: var(--gold); color: #0f172a; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 100;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .letter-card, .book-card {
+      background: #fffbeb;
+      color: #1e293b;
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 20px;
+      padding: 2.2rem 1.8rem;
+      position: relative;
+      border: 2px solid #f59e0b;
+    }
+    .book-card { max-width: 680px; }
+
+    .book-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #fde68a;
+    }
+
+    .print-btn {
+      background: #991b1b;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .book-entry { margin-bottom: 2.2rem; padding-bottom: 1.8rem; border-bottom: 1px dashed #cbd5e1; }
+    .book-entry:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1.2rem;
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: #64748b;
+    }
+
+    .letter-date {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #b45309;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .letter-title { font-family: 'Playfair Display', serif; font-size: 1.7rem; color: #991b1b; margin-bottom: 1.2rem; }
+    .letter-body { font-size: 1.02rem; line-height: 1.75; white-space: pre-line; color: #334155; }
+    .letter-extra { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; }
+    
+    .letter-extra img, .book-entry img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-top: 0.8rem;
+    }
+
+    .letter-extra video, .letter-extra iframe {
+      width: 100%;
+      border-radius: 12px;
+      margin-top: 0.8rem;
+      display: block;
+    }
+
+    .letter-extra iframe {
+      aspect-ratio: 16 / 9;
+      border: none;
+    }
+
+    .music-link {
+      display: inline-block;
+      background: #1db954;
+      color: white;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 99px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 0.8rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ef4444;
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border-radius: 99px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 200;
+    }
+    .toast.show { opacity: 1; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #book-modal, #book-modal * { visibility: visible; }
+      #book-modal { position: absolute; left: 0; top: 0; background: #fff; padding: 0; }
+      .book-card { max-height: none; overflow: visible; border: none; box-shadow: none; width: 100%; max-width: 100%; }
+      .close-btn, .print-btn { display: none !important; }
+      .book-entry { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="main-title" title="Doble clic para modo vista previa">24 Días Contigo ❤️</h1>
+    <p>Una pequeña carta cada día hasta Navidad. No vale hacer trampas y abrirlas antes de tiempo.</p>
+    <div id="preview-badge">🛠️ MODO PRUEBA ACTIVADO (Todo desbloqueado)</div>
+  </header>
+
+  <main class="grid" id="calendar-grid"></main>
+
+  <div class="keepsake-container" id="keepsake-box">
+    <button class="keepsake-btn" id="open-book-btn">📖 Leer y guardar las 24 cartas como recuerdo</button>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="letter-card">
+      <button class="close-btn" id="close-modal">&times;</button>
+      <div class="letter-date" id="modal-date">1 de Diciembre</div>
+      <h2 class="letter-title" id="modal-title">Título</h2>
+      <div class="letter-body" id="modal-body">Texto de la carta...</div>
+      <div class="letter-extra" id="modal-extra"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="book-modal">
+    <div class="book-card">
+      <button class="close-btn" id="close-book">&times;</button>
+      <div class="book-header">
+        <div>
+          <div class="letter-date">Recuerdo completo</div>
+          <h2 class="letter-title" style="margin-bottom:0;">Nuestras 24 Cartas ❤️</h2>
+        </div>
+        <button class="print-btn" onclick="window.print()">💾 Guardar como PDF</button>
+      </div>
+      <div id="book-content"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">¡Eh, tramposa! Todavía no es ese día 🎅</div>
+
+  <script>
+    const cartas = [
+      { 
+        dia: 1, 
+        titulo: "Nuestras primeras navidades.",
+        mensaje: "Hola mi amor, he querido hacerte esto para que nuestras primeras navidades sean un recuerdo inolvidable para los dos. Por eso te he hecho este calendario, estoy haciendo esto mientras tu estás enfadad conmigo sin saber que te estoy preparando esto, espero que cuando leas esto, no estes enfadada :).",
+        imagen: "", 
+        video: "carta1.mp4",
+        cancionUrl: "" 
+      },
+      { dia: 2, titulo: "Algo que admiro de ti", mensaje: "Me encanta lo mucho que te esfuerzas en todo lo que haces, incluso cuando estás cansada. Quería recordarte hoy lo orgulloso que estoy de ti.", imagen: "carta2.jpeg", video: "", cancionUrl: "" },
+      { dia: 3, titulo: "Vale por un plan", mensaje: "Hoy no toca solo leer: este mensaje es un vale oficial por una noche de peli, manta y tu cena favorita elegida 100 % por ti.", imagen: "carta3.jpeg", video: "", cancionUrl: "" },
+      { dia: 4, titulo: "Descubrimiento musical", mensaje: "Has compartido conmigo uno de tus gustos mas grandes, la música, y me has enseñado mucha música (no tanto como yo a ti), y hay muchas que me gustan, pero esta me recuerda mucho a ti.", imagen: "", video: "", cancionUrl: "https://open.spotify.com/intl-es/track/19l6XYRyvWNJQfVFJYsYUG?si=c63c6c6660054665" },
+      { dia: 5, titulo: "Gracias hola", mensaje: "Una de nuestras anecdotas graciosas es con el gracias hola en el Rocanrola, no se si es porque bebí mucho o porque pero lo recuerdo como un momento super gracioso (menos mal que nos dejaron tirados, porque gracias a eso pude vivir ese momento contigo). Te amo.", imagen: "carta5.jpeg", video: "", cancionUrl: "https://open.spotify.com/intl-es/track/32QAG3hzNUSsxRd6RuiqIe?si=8a380e86fa264b50" },
+      { dia: 6, titulo: "Te quiero", mensaje: "Hoy solo te quería decir que te amo con todo mi corazón, que eres lo mas importante en mi vida, y que jamás voy a dejarte mi niñaaaaa.", imagen: "carta6.jpeg", video: "", cancionUrl: "" },
+      { dia: 7, titulo: "Vale para ir a comer", mensaje: "Vale para ir a comer al sitio que quieras (que no sea muy caro jeje).", imagen: "", video: "", cancionUrl: "" },
+      { dia: 8, titulo: "¿Por qué tu?", mensaje: "Pues porque eres una chica increible, guapa, con cuerpazo, luchadora, valiente y que te preocupas mucho por mi y me cuidas mucho. Te amo.", imagen: "", video: "", cancionUrl: "https://open.spotify.com/intl-es/track/5qRKJ8qXfE3s0uTlffenmg?si=431dbd48c531455f" },
+      { dia: 9, titulo: "Guapiiiisima", mensaje: "Hoy solo te voy a enseñar esto y ya. Te amo.", imagen: "carta9.jpeg", video: "", cancionUrl: "" },
+      { dia: 10, titulo: "Vale por un masaje", mensaje: "Vale para un masaje completo, de una duración de 20 minutos (lo vas a necesitar :) ). Te amo.", imagen: "", video: "", cancionUrl: "" },
+      { dia: 11, titulo: "Camino a Lugo", mensaje: "Bueno amorchito, hoy ya te vas a Lugo, se que te pone triste no verme hasta el lunes, pero en nada estamos otra vez juntos, yo te voy a echar mucho de menos, espero que el viaje te sea muy ameno hoy. Te amo", imagen: "", video: "", cancionUrl: "" },
+      { dia: 12, titulo: "Vamos Halcones!!", mensaje: "Hoy empieza tus partidos en Lugo, quiero que sepas que voy a verte. Aunque no esté allí fisicamente, voy a estar viendote, porque siempre voy a estar contigo para todo lo que hagas, para celebrar tus victorias y apoyarte en tus derrotas. Mucha mierda en la sede. Te amo", imagen: "carta12.jpeg", video: "", cancionUrl: "" },
+      { dia: 13, titulo: "Te echo de menos", mensaje: "Dos días y ya te echo de menitos, espero que tu también estés igual que yo. Hoy ya es el ultimo empujón, y para que cojas fuerzas, te dejo por aquí una ayudita, jeje. Te amo", imagen: "", video: "", cancionUrl: "https://open.spotify.com/intl-es/track/3ADvnP5lQK7Ts1X8t8F8th?si=51ac872dc48948a2" },
+      { dia: 14, titulo: "Es HOOOYYYY", mensaje: "HOY POR FÍN NOS VEEEMOOOOSS. No me aguanto las ganas de verte y darte un abrazo muy fuerte, y muchos besitos claro jeje. Te amo.", imagen: "", video: "", cancionUrl: "" },
+      { dia: 15, titulo: "Vale para ir a la feria", mensaje: "Vale para ir un día los dos a la fería, a conseguir un peluchito y dar una vuelta cogidos de la mano. Te amo.", imagen: "", video: "", cancionUrl: "" },
+      { dia: 16, titulo: "Un año distinto", mensaje: "Vaya añito hemos pasado, de cosas muy buenas y muchos recuerdos inolvidables, pero también de momentos muy malos. Y como te dije al principio, siempre he estado a tu lado para celebrar tus momentos buenos, y ayudarte en los peores momentos (y siempre voy a estar, pase lo que pase). Te amo.", imagen: "carta16.jpeg", video: "", cancionUrl: "" },
+      { dia: 17, titulo: "Día 17", mensaje: "Escribe aquí tu carta para el día 17...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 18, titulo: "Día 18", mensaje: "Escribe aquí tu carta para el día 18...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 19, titulo: "Día 19", mensaje: "Escribe aquí tu carta para el día 19...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 20, titulo: "Día 20", mensaje: "Escribe aquí tu carta para el día 20...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 21, titulo: "Día 21", mensaje: "Escribe aquí tu carta para el día 21...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 22, titulo: "Día 22", mensaje: "Escribe aquí tu carta para el día 22...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 23, titulo: "Día 23", mensaje: "Escribe aquí tu carta para el día 23...", imagen: "", video: "", cancionUrl: "" },
+      { dia: 24, titulo: "¡Feliz Nochebuena, mi amor! 🎄", mensaje: "Llegamos al final del calendario, pero esto es solo una excusa más para decirte que el mejor regalo de este año ha sido compartirlo contigo.\n\nTe quiero muchísimo.", imagen: "", video: "", cancionUrl: "" }
+    ];
+
+    const TARGET_YEAR = 2026;
+    const TARGET_MONTH = 11;
+    let previewMode = false;
+
+    const grid = document.getElementById("calendar-grid");
+    const modal = document.getElementById("modal");
+    const bookModal = document.getElementById("book-modal");
+    const toast = document.getElementById("toast");
+
+    let openedDays = [];
+    try {
+      openedDays = JSON.parse(localStorage.getItem("adviento_abiertos") || "[]");
+    } catch (e) {
+      openedDays = [];
+    }
+
+    function isDayUnlocked(day) {
+      if (previewMode) return true;
+      const now = new Date();
+      if (now.getFullYear() > TARGET_YEAR) return true;
+      if (now.getFullYear() === TARGET_YEAR && now.getMonth() === TARGET_MONTH) {
+        return now.getDate() >= day;
+      }
+      return false;
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function closeLetterModal() {
+      modal.classList.remove("active");
+      const extra = document.getElementById("modal-extra");
+      extra.innerHTML = ""; // Detiene cualquier vídeo al cerrar
+    }
+
+    function openLetter(carta) {
+      document.getElementById("modal-date").textContent = `${carta.dia} de Diciembre`;
+      document.getElementById("modal-title").textContent = carta.titulo;
+      document.getElementById("modal-body").textContent = carta.mensaje;
+
+      const extra = document.getElementById("modal-extra");
+      extra.innerHTML = "";
+
+      if (carta.imagen) {
+        const img = document.createElement("img");
+        img.src = carta.imagen;
+        img.alt = "Recuerdo";
+        extra.appendChild(img);
+      }
+
+      if (carta.video) {
+        if (carta.video.includes("youtube.com") || carta.video.includes("youtu.be")) {
+          const iframe = document.createElement("iframe");
+          iframe.src = carta.video;
+          iframe.allowFullscreen = true;
+          extra.appendChild(iframe);
+        } else {
+          const vid = document.createElement("video");
+          vid.src = carta.video;
+          vid.controls = true;
+          vid.playsInline = true;
+          extra.appendChild(vid);
+        }
+      }
+
+      if (carta.cancionUrl) {
+        const link = document.createElement("a");
+        link.href = carta.cancionUrl;
+        link.target = "_blank";
+        link.className = "music-link";
+        link.textContent = "🎵 Escuchar canción de hoy";
+        extra.appendChild(link);
+      }
+
+      extra.style.display = (carta.imagen || carta.video || carta.cancionUrl) ? "block" : "none";
+      modal.classList.add("active");
+
+      if (!previewMode && !openedDays.includes(carta.dia)) {
+        openedDays.push(carta.dia);
+        try { localStorage.setItem("adviento_abiertos", JSON.stringify(openedDays)); } catch (e) {}
+        renderGrid();
+      }
+    }
+
+    function openFullBook() {
+      const container = document.getElementById("book-content");
+      container.innerHTML = "";
+
+      cartas.forEach(carta => {
+        const entry = document.createElement("div");
+        entry.className = "book-entry";
+        entry.innerHTML = `
+          <div class="letter-date">${carta.dia} de Diciembre</div>
+          <h3 class="letter-title" style="font-size:1.35rem; margin-bottom:0.8rem;">${carta.titulo}</h3>
+          <div class="letter-body">${carta.mensaje}</div>
+          ${carta.imagen ? `<img src="${carta.imagen}" alt="Recuerdo día ${carta.dia}">` : ""}
+        `;
+        container.appendChild(entry);
+      });
+
+      bookModal.classList.add("active");
+    }
+
+    function renderGrid() {
+      grid.innerHTML = "";
+      cartas.forEach(carta => {
+        const unlocked = isDayUnlocked(carta.dia);
+        const isOpened = openedDays.includes(carta.dia);
+
+        const card = document.createElement("div");
+        card.className = "door " + (isOpened ? "opened" : (unlocked ? "available" : "locked"));
+
+        card.innerHTML = `
+          <span class="day-number">${carta.dia}</span>
+          <span class="door-status">${isOpened ? "Leída 💌" : (unlocked ? "¡Abrir hoy!" : "🔒 Bloqueada")}</span>
+        `;
+
+        card.addEventListener("click", () => {
+          if (unlocked) {
+            openLetter(carta);
+          } else {
+            showToast(`¡Aún no! Esta carta se abre el ${carta.dia} de diciembre 🎅`);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+
+      document.getElementById("keepsake-box").style.display = isDayUnlocked(24) ? "block" : "none";
+    }
+
+    document.getElementById("close-modal").addEventListener("click", closeLetterModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeLetterModal(); });
+
+    document.getElementById("open-book-btn").addEventListener("click", openFullBook);
+    document.getElementById("close-book").addEventListener("click", () => bookModal.classList.remove("active"));
+    bookModal.addEventListener("click", (e) => { if (e.target === bookModal) bookModal.classList.remove("active"); });
+
+    document.getElementById("main-title").addEventListener("dblclick", () => {
+      previewMode = !previewMode;
+      document.getElementById("preview-badge").style.display = previewMode ? "inline-block" : "none";
+      renderGrid();
+    });
+
+    renderGrid();
+  </script>
+</body>
+</html>
